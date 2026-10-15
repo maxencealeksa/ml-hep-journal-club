@@ -90,15 +90,13 @@ header.site-header {
   align-items: center;
   justify-content: space-between;
   height: 68px;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .brand-group {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  text-decoration: none;
-  color: var(--text-primary);
+  gap: 0.85rem;
 }
 
 .logos-container {
@@ -141,22 +139,21 @@ header.site-header {
   fill: currentColor;
 }
 
-.brand-text h1 {
+.site-title {
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  margin: 0;
+  margin-right: auto;
   white-space: nowrap;
-}
-
-.brand-text p {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  flex-shrink: 0;
 }
 
 /* Buttons */
@@ -748,18 +745,23 @@ footer.site-footer {
     padding: 0 0.85rem;
   }
 
-  /* Header adjustments */
+  /* Header 2-row grid layout: logos & buttons on row 1, title on row 2 */
   .header-inner {
-    height: 60px;
-    gap: 0.5rem;
-  }
-
-  .brand-group {
-    gap: 0.65rem;
-    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    row-gap: 0.35rem;
+    column-gap: 0.5rem;
+    height: auto;
+    padding: 0.65rem 0;
+    align-items: center;
   }
 
   .logos-container {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
     gap: 0.45rem;
   }
 
@@ -775,22 +777,26 @@ footer.site-footer {
     height: 16px;
   }
 
-  /* Hide long subtitle on phones to prevent pushing buttons off screen */
-  .brand-text p {
-    display: none;
-  }
-
-  .brand-text h1 {
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Header actions (Add Paper & Theme toggle) strictly stay on screen */
   .header-actions {
-    flex-shrink: 0;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    display: flex;
+    align-items: center;
     gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .site-title {
+    grid-column: 1 / -1; /* Full width row 2 - zero overlap with any button */
+    grid-row: 2;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    text-align: left;
+    white-space: normal;
   }
 
   .btn {
@@ -864,8 +870,8 @@ footer.site-footer {
 }
 
 @media (max-width: 420px) {
-  .brand-text h1 {
-    font-size: 0.88rem;
+  .site-title {
+    font-size: 1rem;
   }
 
   .fastml-logo-img {

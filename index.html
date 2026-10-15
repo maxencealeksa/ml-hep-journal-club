@@ -35,12 +35,9 @@
             </svg>
           </div>
         </div>
-
-        <div class="brand-text">
-          <h1>ML-HEP Journal Club</h1>
-          <p>Machine Learning for Particle Physics</p>
-        </div>
       </div>
+
+      <h1 class="site-title">ML-HEP Journal Club</h1>
 
       <div class="header-actions">
         <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
@@ -97,34 +94,14 @@
             </button>
           </div>
 
-          <!-- Zoom Link & Credentials -->
-          <div class="location-item" style="gap:0.75rem;">
-            <a id="zoomLinkBtn" href="https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1" target="_blank" rel="noopener noreferrer" class="btn btn-zoom btn-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 7l-7 5 7 5V7z"></path>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-              </svg>
-              <span>Join Zoom Call</span>
-            </a>
-
-            <div class="zoom-details">
-              <span>ID: <code style="font-family:var(--font-mono);">682 7616 3828</code></span>
-              <button class="copy-btn" id="copyMeetingIdBtn" title="Copy Meeting ID">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              </button>
-              <span style="color:var(--text-muted);">•</span>
-              <span>Passcode: <code style="font-family:var(--font-mono);">201452</code></span>
-              <button class="copy-btn" id="copyPasscodeBtn" title="Copy Passcode">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
+          <!-- Zoom Direct Button (No ID / passcode clutter) -->
+          <a id="zoomLinkBtn" href="https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1" target="_blank" rel="noopener noreferrer" class="btn btn-zoom">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 7l-7 5 7 5V7z"></path>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <span>Join Zoom Meeting</span>
+          </a>
         </div>
       </div>
     </section>

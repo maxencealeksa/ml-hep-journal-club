@@ -119,8 +119,6 @@
   }
 
   setupCopyButton(DOM.copyRoomBtn, state.info.room, 'Room (HPK D 32)');
-  setupCopyButton(DOM.copyMeetingIdBtn, state.info.zoom_meeting_id, 'Meeting ID');
-  setupCopyButton(DOM.copyPasscodeBtn, state.info.zoom_passcode, 'Passcode');
 
   // Network / Data Layer
   async function loadInitialData() {

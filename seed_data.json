@@ -9,7 +9,7 @@
     "arxiv_id": "2610.12408",
     "votes": 4,
     "voters": ["Marie", "Donatella", "Philip", "Maxence"],
-    "status": "voting",
+    "status": "discussed",
     "notes": "I like this votes: Marie, Donatella, Philip, Maxence",
     "created_at": "2026-10-15T10:00:00Z"
   },
@@ -23,7 +23,7 @@
     "arxiv_id": "2610.13876",
     "votes": 3,
     "voters": ["Marie", "Donatella", "Philip"],
-    "status": "voting",
+    "status": "discussed",
     "notes": "I like this votes: Marie, Donatella, Philip",
     "created_at": "2026-10-15T10:05:00Z"
   },
@@ -79,7 +79,7 @@
     "arxiv_id": "2610.13437",
     "votes": 1,
     "voters": ["Marie"],
-    "status": "voting",
+    "status": "discussed",
     "notes": "I like this votes: Marie",
     "created_at": "2026-10-15T10:25:00Z"
   },

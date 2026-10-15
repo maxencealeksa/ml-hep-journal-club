@@ -739,3 +739,145 @@ footer.site-footer {
   flex-wrap: wrap;
   gap: 1rem;
 }
+
+/* =========================================================
+   Mobile Responsiveness (iPhone & Small Screens)
+   ========================================================= */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.85rem;
+  }
+
+  /* Header adjustments */
+  .header-inner {
+    height: 60px;
+    gap: 0.5rem;
+  }
+
+  .brand-group {
+    gap: 0.65rem;
+    min-width: 0;
+  }
+
+  .logos-container {
+    gap: 0.45rem;
+  }
+
+  .fastml-logo-img {
+    height: 22px;
+  }
+
+  .eth-logo-svg {
+    height: 16px;
+  }
+
+  .logo-divider {
+    height: 16px;
+  }
+
+  /* Hide long subtitle on phones to prevent pushing buttons off screen */
+  .brand-text p {
+    display: none;
+  }
+
+  .brand-text h1 {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Header actions (Add Paper & Theme toggle) strictly stay on screen */
+  .header-actions {
+    flex-shrink: 0;
+    gap: 0.4rem;
+  }
+
+  .btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  /* Meeting info card */
+  .meeting-banner {
+    padding: 1rem;
+  }
+
+  .meeting-banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .meeting-locations {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .location-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  .zoom-details {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  /* Controls & Search */
+  .controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .view-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .search-box {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Paper cards on mobile */
+  .paper-card {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .paper-vote-zone {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .intuitive-vote-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-text h1 {
+    font-size: 0.88rem;
+  }
+
+  .fastml-logo-img {
+    height: 20px;
+  }
+
+  .eth-logo-svg {
+    height: 14px;
+  }
+
+  .header-actions .btn-primary {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.8rem;
+  }
+}

@@ -165,6 +165,7 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Voter-ID, X-Voter-Name")
+        self.send_header("Cache-Control", "no-cache, must-revalidate")
         super().end_headers()
 
     def do_OPTIONS(self):

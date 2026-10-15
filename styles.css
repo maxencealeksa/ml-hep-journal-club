@@ -59,6 +59,10 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
@@ -745,6 +749,8 @@ footer.site-footer {
    ========================================================= */
 @media (max-width: 768px) {
   .container {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
     padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
     padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   }
@@ -757,8 +763,7 @@ footer.site-footer {
     row-gap: 0.45rem;
     column-gap: 0.5rem;
     height: auto;
-    padding-top: 0.85rem;
-    padding-bottom: 0.75rem;
+    padding: 0.85rem 0.35rem 0.75rem 0.35rem;
     align-items: center;
   }
 
@@ -774,18 +779,25 @@ footer.site-footer {
     display: flex;
     align-items: center;
     gap: 0.45rem;
+    flex-shrink: 0;
   }
 
   .fastml-logo-img {
     height: 22px;
+    width: auto;
+    flex-shrink: 0;
   }
 
   .eth-logo-svg {
     height: 16px;
+    width: 96px;
+    max-width: 96px;
+    flex-shrink: 0;
   }
 
   .logo-divider {
     height: 16px;
+    flex-shrink: 0;
   }
 
   .header-actions {

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML-HEP Journal Club | FastML & ETH Zurich</title>
+  <meta name="description" content="Weekly Machine Learning for Particle Physics Journal Club at ETH Zurich.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand-group">
+        <div class="logos-container">
+          <!-- FastML Foundation Logo -->
+          <img src="https://fastmachinelearning.org/images/fastml_logo.png" 
+               alt="FastML Foundation" 
+               class="fastml-logo-img" 
+               onerror="this.style.display='none'; document.getElementById('fastmlFallback').style.display='flex';">
+          <div id="fastmlFallback" class="fastml-logo-fallback" style="display:none;" title="Fast Machine Learning">
+            <span class="fast">fast</span><span class="ml">ML</span>
+          </div>
+
+          <div class="logo-divider"></div>
+
+          <!-- Official ETH Zurich Vector Logo -->
+          <div class="eth-logo-wrap" title="ETH Zürich">
+            <svg class="eth-logo-svg" viewBox="0 0 192 32" height="24" aria-label="ETH Zürich">
+              <path d="M70.122 12h-6.931l2.434-12h-58.644l-6.194 31h23.379l1.59-8h-13.815l.79-4h13.824l1.403-7h-13.792l.788-4h21.952l-4.595 23h9.533l4.593-23h8.003l-4.593 23h9.606l2.377-12h6.929l-2.375 12h9.56l6.198-31h-9.586zm40.902-8h3.189l.79-4h-3.174zm8.179 0h3.191l.788-4h-3.174zm29.828 0h3.189l.792-4h-3.176zm15.963 5.908c-5.565 0-9.47 3.94-10.72 10.812a18.357 18.357 0 0 0-.3 3.26c0 4.694 2.833 7.612 7.401 7.612a9.713 9.713 0 0 0 7.009-2.962l.028-.03-1.769-2.168-.032-.038-.034.036a6.453 6.453 0 0 1-5.034 2.426c-2.177 0-4.504-1.306-4.504-4.962a16.14 16.14 0 0 1 .336-3.156 12.177 12.177 0 0 1 2.712-6.048 6.229 6.229 0 0 1 4.608-2.042 4.407 4.407 0 0 1 4.089 2.332l.026.042 2.252-1.912.032-.028-.024-.034a6.832 6.832 0 0 0-6.076-3.14zm20.354-.449a7.848 7.848 0 0 0-6.038 2.392l2.392-11.851h-3.084l-6.196 31h3.084l2.572-13.023c1.102-5.488 5.36-5.766 6.2-5.766a3.43 3.43 0 0 1 3.766 3.697 11.505 11.505 0 0 1-.216 1.968l-2.616 13.124h3.08l2.706-13.409a11.086 11.086 0 0 0 .216-2.115 5.629 5.629 0 0 0-5.866-6.017zm-41.577 21.49l-.01.052h3.041l4.15-21h-2.99zm-55.772-18.005l-.009.057h10.322l-13.609 15.465-.006.008-.511 2.527h14.657l.577-3h-10.957l13.649-15.465.006-.01.513-2.525h-14.062zm50.709-3.199a7.129 7.129 0 0 0-5.745 2.662l.472-2.359.008-.047h-3l-4.147 20.948-.008.052h3.045l2.536-12.85c.649-3.295 3.168-5.688 5.994-5.688a3.474 3.474 0 0 1 2.919 1.466l.03.038 2.469-2.224-.024-.03a5.652 5.652 0 0 0-4.549-1.968zm-18.369.256h3.084l-.008.05-4.144 20.95h-3.001l.01-.052.397-2.18a7.768 7.768 0 0 1-6.051 2.484 5.546 5.546 0 0 1-5.78-5.937 9.544 9.544 0 0 1 .217-1.899l.035-.19 2.622-13.226h3.043l-.01.05-2.577 12.898a11.772 11.772 0 0 0-.207 1.94 3.402 3.402 0 0 0 3.753 3.648c.825 0 4.989-.276 6.076-5.693z" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="brand-text">
+          <h1>ML-HEP Journal Club</h1>
+          <p>Machine Learning for Particle Physics</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+          </svg>
+        </button>
+        <button id="openProposeModalBtn" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Add Paper</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Clean Meeting Info Banner (No Countdown) -->
+    <section class="meeting-banner">
+      <div class="meeting-banner-inner">
+        <!-- Schedule details -->
+        <div class="meeting-schedule">
+          <div class="calendar-icon-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="schedule-text">
+            <h2>Every Thursday at 2pm</h2>
+            <p>Weekly informal discussion on selected AI & machine learning papers for particle physics</p>
+          </div>
+        </div>
+
+        <!-- Meeting Locations -->
+        <div class="meeting-locations">
+          <!-- Room -->
+          <div class="location-item" title="Physical Meeting Room">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Room: <strong class="room-code">HPK D 32</strong> (ETH Hönggerberg)</span>
+            <button class="copy-btn" id="copyRoomBtn" title="Copy Room">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Zoom Link & Credentials -->
+          <div class="location-item" style="gap:0.75rem;">
+            <a id="zoomLinkBtn" href="https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1" target="_blank" rel="noopener noreferrer" class="btn btn-zoom btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 7l-7 5 7 5V7z"></path>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+              <span>Join Zoom Call</span>
+            </a>
+
+            <div class="zoom-details">
+              <span>ID: <code style="font-family:var(--font-mono);">682 7616 3828</code></span>
+              <button class="copy-btn" id="copyMeetingIdBtn" title="Copy Meeting ID">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+              <span style="color:var(--text-muted);">•</span>
+              <span>Passcode: <code style="font-family:var(--font-mono);">201452</code></span>
+              <button class="copy-btn" id="copyPasscodeBtn" title="Copy Passcode">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls Bar: Tabs & Search -->
+    <section>
+      <div class="controls-bar">
+        <div class="view-tabs" role="tablist">
+          <button class="tab-btn active" data-tab="voting" role="tab" aria-selected="true">
+            <span>Proposed Papers (Voting)</span>
+            <span class="tab-counter" id="countVoting">0</span>
+          </button>
+          <button class="tab-btn" data-tab="discussed" role="tab" aria-selected="false">
+            <span>Past Meetings (Discussed)</span>
+            <span class="tab-counter" id="countDiscussed">0</span>
+          </button>
+        </div>
+
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search papers by title or author...">
+        </div>
+      </div>
+
+      <!-- Papers Container -->
+      <div id="papersList" class="papers-container">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal: Add Paper (Works for ANY URL: arXiv, Nature, OpenReview, PDF, etc.) -->
+  <div id="addPaperModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Paper to Journal Club</h3>
+        <button type="button" class="close-btn" data-close-modal="addPaperModal">&times;</button>
+      </div>
+      <form id="addPaperForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="paperUrl">Paper URL (Any link: arXiv, OpenReview, Nature, PhysRev, PDF, etc.) *</label>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="url" id="paperUrl" required placeholder="https://arxiv.org/abs/... or https://openreview.net/forum?id=...">
+              <button type="button" id="arxivFetchBtn" class="btn btn-secondary btn-sm" title="Auto-fill if URL is from arXiv">
+                Auto-fill (arXiv)
+              </button>
+            </div>
+            <span class="hint">Works with any paper source or direct link. Auto-fill works for arXiv URLs.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="paperTitle">Paper Title *</label>
+            <input type="text" id="paperTitle" required placeholder="Full paper title">
+          </div>
+
+          <div class="form-group">
+            <label for="paperAuthors">Authors</label>
+            <input type="text" id="paperAuthors" placeholder="e.g. Fabrizio Napolitano, Luca Della Penna, et al.">
+          </div>
+
+          <div class="form-group">
+            <label for="paperVoterName">Your Name (optional, added to votes)</label>
+            <input type="text" id="paperVoterName" placeholder="Your name (e.g. Maxence)">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="addPaperModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Paper</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Mark as Discussed -->
+  <div id="statusModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>Move to Past Meetings</h3>
+        <button type="button" class="close-btn" data-close-modal="statusModal">&times;</button>
+      </div>
+      <form id="statusForm">
+        <div class="modal-body">
+          <input type="hidden" id="statusPaperId">
+          <p id="statusPaperTitleDisplay" style="font-weight:600;color:var(--accent-cyan);margin-bottom:0.75rem;font-size:0.9rem;"></p>
+
+          <div class="form-group">
+            <label for="statusSelect">Status</label>
+            <select id="statusSelect" class="search-input">
+              <option value="voting">Upcoming Meeting (Voting)</option>
+              <option value="discussed">Past Meeting (Discussed)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between;">
+          <button type="button" class="btn btn-secondary btn-sm" id="deletePaperBtn" style="color:var(--accent-rose);">Delete</button>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal="statusModal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>ML-HEP Journal Club • Thursdays at 2pm • HPK D 32 + Zoom</div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span>FastML Foundation</span>
+        <span style="color:var(--text-muted);">•</span>
+        <svg class="eth-logo-svg" viewBox="0 0 192 32" height="15" fill="currentColor" aria-label="ETH Zürich" style="opacity:0.85;">
+          <path d="M70.122 12h-6.931l2.434-12h-58.644l-6.194 31h23.379l1.59-8h-13.815l.79-4h13.824l1.403-7h-13.792l.788-4h21.952l-4.595 23h9.533l4.593-23h8.003l-4.593 23h9.606l2.377-12h6.929l-2.375 12h9.56l6.198-31h-9.586zm40.902-8h3.189l.79-4h-3.174zm8.179 0h3.191l.788-4h-3.174zm29.828 0h3.189l.792-4h-3.176zm15.963 5.908c-5.565 0-9.47 3.94-10.72 10.812a18.357 18.357 0 0 0-.3 3.26c0 4.694 2.833 7.612 7.401 7.612a9.713 9.713 0 0 0 7.009-2.962l.028-.03-1.769-2.168-.032-.038-.034.036a6.453 6.453 0 0 1-5.034 2.426c-2.177 0-4.504-1.306-4.504-4.962a16.14 16.14 0 0 1 .336-3.156 12.177 12.177 0 0 1 2.712-6.048 6.229 6.229 0 0 1 4.608-2.042 4.407 4.407 0 0 1 4.089 2.332l.026.042 2.252-1.912.032-.028-.024-.034a6.832 6.832 0 0 0-6.076-3.14zm20.354-.449a7.848 7.848 0 0 0-6.038 2.392l2.392-11.851h-3.084l-6.196 31h3.084l2.572-13.023c1.102-5.488 5.36-5.766 6.2-5.766a3.43 3.43 0 0 1 3.766 3.697 11.505 11.505 0 0 1-.216 1.968l-2.616 13.124h3.08l2.706-13.409a11.086 11.086 0 0 0 .216-2.115 5.629 5.629 0 0 0-5.866-6.017zm-41.577 21.49l-.01.052h3.041l4.15-21h-2.99zm-55.772-18.005l-.009.057h10.322l-13.609 15.465-.006.008-.511 2.527h14.657l.577-3h-10.957l13.649-15.465.006-.01.513-2.525h-14.062zm50.709-3.199a7.129 7.129 0 0 0-5.745 2.662l.472-2.359.008-.047h-3l-4.147 20.948-.008.052h3.045l2.536-12.85c.649-3.295 3.168-5.688 5.994-5.688a3.474 3.474 0 0 1 2.919 1.466l.03.038 2.469-2.224-.024-.03a5.652 5.652 0 0 0-4.549-1.968zm-18.369.256h3.084l-.008.05-4.144 20.95h-3.001l.01-.052.397-2.18a7.768 7.768 0 0 1-6.051 2.484 5.546 5.546 0 0 1-5.78-5.937 9.544 9.544 0 0 1 .217-1.899l.035-.19 2.622-13.226h3.043l-.01.05-2.577 12.898a11.772 11.772 0 0 0-.207 1.94 3.402 3.402 0 0 0 3.753 3.648c.825 0 4.989-.276 6.076-5.693z"/>
+        </svg>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

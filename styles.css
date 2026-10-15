@@ -72,6 +72,8 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 1.25rem;
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
 }
 
 /* Header */
@@ -83,6 +85,7 @@ header.site-header {
   position: sticky;
   top: 0;
   z-index: 50;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .header-inner {
@@ -742,7 +745,8 @@ footer.site-footer {
    ========================================================= */
 @media (max-width: 768px) {
   .container {
-    padding: 0 0.85rem;
+    padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   }
 
   /* Header 2-row grid layout: logos & buttons on row 1, title on row 2 */
@@ -750,16 +754,23 @@ footer.site-footer {
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto;
-    row-gap: 0.35rem;
+    row-gap: 0.45rem;
     column-gap: 0.5rem;
     height: auto;
-    padding: 0.65rem 0;
+    padding-top: 0.85rem;
+    padding-bottom: 0.75rem;
     align-items: center;
   }
 
-  .logos-container {
+  .brand-group {
     grid-column: 1;
     grid-row: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .logos-container {
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -790,7 +801,7 @@ footer.site-footer {
   .site-title {
     grid-column: 1 / -1; /* Full width row 2 - zero overlap with any button */
     grid-row: 2;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 800;
     margin: 0;
     padding: 0;

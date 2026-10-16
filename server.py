@@ -9,6 +9,8 @@ voting with named voters or 1-click votes, and meeting coordination.
 import sys
 import os
 import json
+import hmac
+import hashlib
 import sqlite3
 import urllib.request
 import urllib.parse
@@ -18,8 +20,32 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 PORT = int(os.environ.get("PORT", 8080))
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "journal_club.db")
-SEED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seed_data.json")
+SEED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)) , "seed_data.json")
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MAX_PAYLOAD_BYTES = 32 * 1024  # 32 KB max JSON payload
+ALLOWED_STATIC_FILES = {
+    "/",
+    "/index.html",
+    "/styles.css",
+    "/app.js",
+    "/eth_logo.svg",
+    "/seed_data.json",
+}
+BLOCKED_EXTENSIONS = (".py", ".pyc", ".db", ".sqlite", ".sqlite3", ".sh", ".env", ".log", ".md")
+
+# Salted SHA-256 hashes for Admin PIN and Zoom Kenncode verification
+ADMIN_PIN_SALT = "ml_hep_ethz_pin_v1:"
+ADMIN_PIN_SHA256 = "5ab6a739d0cbce23127c455134a6482984f0e9169b9b5716f0b0d4feea62511b"
+
+ZOOM_KC_SALT = "ml_hep_ethz_zoom_v1:"
+ZOOM_KC_SHA256 = "2ec24bcc093ff2df490a2108b502d19d9f4c3686260588fa134132c351c2b716"
+ENCRYPTED_ZOOM_URL = [
+    90, 68, 69, 68, 70, 8, 29, 31, 67, 67, 65, 90, 28, 74, 94, 91, 88, 31, 74,
+    30, 85, 81, 26, 88, 29, 6, 9, 6, 2, 4, 3, 6, 2, 12, 7, 10, 13, 64, 70, 80,
+    8, 80, 67, 3, 101, 82, 3, 118, 4, 114, 102, 124, 67, 3, 125, 113, 127, 82,
+    113, 97, 127, 100, 88, 82, 0, 64, 72, 88, 2, 85, 108, 28, 3
+]
 
 DEFAULT_INFO = {
     "title": "ML for Particle Physics Journal Club",
@@ -27,11 +53,36 @@ DEFAULT_INFO = {
     "meeting_time": "14:00",
     "timezone": "Europe/Zurich",
     "room": "HPK D 32",
-    "room_building": "ETH Hönggerberg • Physics Building HPK, Floor D",
-    "zoom_url": "https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1",
-    "zoom_meeting_id": "682 7616 3828",
-    "zoom_passcode": "201452"
+    "room_building": "ETH Hönggerberg • Physics Building HPK, Floor D"
 }
+
+def verify_admin_pin(pin_value):
+    if not pin_value:
+        return False
+    env_pin = os.environ.get("ADMIN_PIN")
+    if env_pin:
+        return hmac.compare_digest(str(pin_value).strip(), env_pin.strip())
+    digest = hashlib.sha256((ADMIN_PIN_SALT + str(pin_value).strip()).encode("utf-8")).hexdigest()
+    return hmac.compare_digest(digest, ADMIN_PIN_SHA256)
+
+def verify_zoom_kenncode(code_value):
+    if not code_value:
+        return None
+    clean_code = str(code_value).strip()
+    digest = hashlib.sha256((ZOOM_KC_SALT + clean_code).encode("utf-8")).hexdigest()
+    if not hmac.compare_digest(digest, ZOOM_KC_SHA256):
+        return None
+    key = (clean_code * 20).encode("utf-8")
+    return bytes([b ^ key[i] for i, b in enumerate(ENCRYPTED_ZOOM_URL)]).decode("utf-8")
+
+def is_safe_http_url(url_str):
+    if not url_str or len(url_str) > 2000:
+        return False
+    try:
+        parsed = urllib.parse.urlparse(url_str.strip())
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    except Exception:
+        return False
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -74,7 +125,8 @@ def init_db():
             )
         """)
 
-        # Default info
+        # Default info (ensure sensitive zoom tokens are not stored in public info table)
+        conn.execute("DELETE FROM club_info WHERE key IN ('zoom_url', 'zoom_passcode', 'zoom_meeting_id')")
         for key, val in DEFAULT_INFO.items():
             conn.execute("INSERT OR IGNORE INTO club_info (key, value) VALUES (?, ?)", (key, str(val)))
 
@@ -164,7 +216,9 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Voter-ID, X-Voter-Name")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Voter-ID, X-Voter-Name, X-Admin-PIN")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
         self.send_header("Cache-Control", "no-cache, must-revalidate")
         super().end_headers()
 
@@ -183,6 +237,8 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
     def _read_json(self):
         try:
             content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > MAX_PAYLOAD_BYTES:
+                return None
             if content_length > 0:
                 raw = self.rfile.read(content_length).decode("utf-8")
                 return json.loads(raw)
@@ -190,9 +246,30 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
             pass
         return {}
 
+    def _get_admin_pin(self, data=None):
+        pin = self.headers.get("X-Admin-PIN", "").strip()
+        if not pin and isinstance(data, dict) and data.get("pin"):
+            pin = str(data.get("pin")).strip()
+        return pin
+
+    def _is_blocked_static_path(self, raw_path):
+        clean_path = urllib.parse.unquote(raw_path).split("?")[0].split("#")[0]
+        normalized = os.path.normpath(clean_path)
+        if not normalized.startswith("/"):
+            normalized = "/" + normalized
+        # Block any hidden files/directories (.git, .env, etc.) or parent traversal
+        parts = [p for p in normalized.split("/") if p]
+        if any(p.startswith(".") or p == ".." for p in parts):
+            return True
+        if normalized.lower().endswith(BLOCKED_EXTENSIONS):
+            return True
+        if normalized not in ALLOWED_STATIC_FILES:
+            return True
+        return False
+
     def _get_voter_info(self):
         voter_id = self.headers.get("X-Voter-ID")
-        voter_name = self.headers.get("X-Voter-Name", "").strip()
+        voter_name = self.headers.get("X-Voter-Name", "").strip()[:100]
         if not voter_id:
             parsed = urllib.parse.urlparse(self.path)
             qs = urllib.parse.parse_qs(parsed.query)
@@ -200,7 +277,14 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
                 voter_id = qs["voter_id"][0]
         if not voter_id:
             voter_id = self.client_address[0]
-        return voter_id, voter_name
+        return str(voter_id)[:100], voter_name
+
+    def do_HEAD(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if not parsed.path.startswith("/api/") and self._is_blocked_static_path(parsed.path):
+            self._send_json({"error": "Forbidden"}, 403)
+            return
+        super().do_HEAD()
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -268,28 +352,52 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
             })
             return
 
+        if self._is_blocked_static_path(path):
+            self._send_json({"error": "Forbidden: Direct access to this file is blocked"}, 403)
+            return
+
         super().do_GET()
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
-        if path == "/api/papers":
-            data = self._read_json()
-            title = (data.get("title") or "").strip()
-            url = (data.get("url") or "").strip()
+        data = self._read_json()
+        if data is None:
+            self._send_json({"error": "Payload too large (max 32 KB)"}, 413)
+            return
+
+        if path == "/api/zoom":
+            kenncode = (data.get("kenncode") or "").strip()
+            zoom_url = verify_zoom_kenncode(kenncode)
+            if not zoom_url:
+                self._send_json({"error": "Incorrect Zoom Kenncode"}, 403)
+                return
+            self._send_json({"success": True, "zoom_url": zoom_url})
+            return
+
+        elif path == "/api/papers":
+            title = (data.get("title") or "").strip()[:500]
+            url = (data.get("url") or "").strip()[:2000]
             if not title or not url:
                 self._send_json({"error": "Title and URL are required"}, 400)
                 return
+            if not is_safe_http_url(url):
+                self._send_json({"error": "Paper URL must be a valid http:// or https:// link"}, 400)
+                return
 
-            paper_id = data.get("id") or f"paper-{int(datetime.now(timezone.utc).timestamp()*1000)}"
-            authors = (data.get("authors") or "").strip()
+            paper_id = (data.get("id") or f"paper-{int(datetime.now(timezone.utc).timestamp()*1000)}")[:100]
+            authors = (data.get("authors") or "").strip()[:1000]
             year = int(data.get("year", datetime.now().year))
-            pdf_url = (data.get("pdf_url") or "").strip()
-            arxiv_id = (data.get("arxiv_id") or "").strip()
+            pdf_url = (data.get("pdf_url") or "").strip()[:2000]
+            if pdf_url and not is_safe_http_url(pdf_url):
+                pdf_url = ""
+            arxiv_id = (data.get("arxiv_id") or "").strip()[:100]
             tags = data.get("tags") or []
-            notes = (data.get("notes") or "").strip()
+            notes = (data.get("notes") or "").strip()[:1000]
             status = data.get("status", "voting")
+            if status not in ("voting", "discussed"):
+                status = "voting"
             created_at = datetime.now(timezone.utc).isoformat()
 
             conn = get_db()
@@ -319,9 +427,8 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
             voter_id, voter_name = self._get_voter_info()
 
             # Parse payload if name provided
-            data = self._read_json()
             if not voter_name and data.get("name"):
-                voter_name = data.get("name").strip()
+                voter_name = str(data.get("name")).strip()[:100]
 
             conn = get_db()
             with conn:
@@ -356,12 +463,21 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
 
+        data = self._read_json()
+        if data is None:
+            self._send_json({"error": "Payload too large (max 32 KB)"}, 413)
+            return
+
         if path.startswith("/api/papers/") and path.endswith("/status"):
+            pin = self._get_admin_pin(data)
+            if not verify_admin_pin(pin):
+                self._send_json({"error": "Invalid Admin PIN"}, 403)
+                return
+
             parts = path.split("/")
             paper_id = parts[3]
-            data = self._read_json()
             status = data.get("status")
-            discussed_date = data.get("discussed_date", "")
+            discussed_date = (data.get("discussed_date") or "").strip()[:50]
 
             valid_statuses = ("voting", "discussed")
             if status not in valid_statuses:
@@ -384,7 +500,18 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+
+        data = self._read_json()
+        if data is None:
+            self._send_json({"error": "Payload too large (max 32 KB)"}, 413)
+            return
+
         if path.startswith("/api/papers/"):
+            pin = self._get_admin_pin(data)
+            if not verify_admin_pin(pin):
+                self._send_json({"error": "Invalid Admin PIN"}, 403)
+                return
+
             parts = path.split("/")
             paper_id = parts[3]
             conn = get_db()

@@ -8,6 +8,38 @@
 (function () {
   'use strict';
 
+  // Security Constants (Hashes for PIN & Zoom Kenncode)
+  const PIN_HASH_FNV = 0xa24036fb;
+  const ZOOM_KC_HASH_FNV = 0xb1c6710e;
+  const ENCRYPTED_ZOOM_URL = [
+    90, 68, 69, 68, 70, 8, 29, 31, 67, 67, 65, 90, 28, 74, 94, 91, 88, 31, 74,
+    30, 85, 81, 26, 88, 29, 6, 9, 6, 2, 4, 3, 6, 2, 12, 7, 10, 13, 64, 70, 80,
+    8, 80, 67, 3, 101, 82, 3, 118, 4, 114, 102, 124, 67, 3, 125, 113, 127, 82,
+    113, 97, 127, 100, 88, 82, 0, 64, 72, 88, 2, 85, 108, 28, 3
+  ];
+
+  function fnv1aHash(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function verifyPinClient(pin) {
+    if (!pin) return false;
+    return fnv1aHash('ml_hep_pin:' + String(pin).trim()) === PIN_HASH_FNV;
+  }
+
+  function unlockZoomUrl(code) {
+    if (!code) return null;
+    const clean = String(code).trim();
+    if (fnv1aHash('ml_hep_zoom:' + clean) !== ZOOM_KC_HASH_FNV) return null;
+    const key = clean.repeat(20);
+    return ENCRYPTED_ZOOM_URL.map((b, i) => String.fromCharCode(b ^ key.charCodeAt(i))).join('');
+  }
+
   // Application State
   let state = {
     isServerMode: true,
@@ -18,10 +50,7 @@
     papers: [],
     info: {
       room: 'HPK D 32',
-      room_building: 'ETH Hönggerberg • Physics Building HPK, Floor D',
-      zoom_url: 'https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1',
-      zoom_meeting_id: '682 7616 3828',
-      zoom_passcode: '201452'
+      room_building: 'ETH Hönggerberg • Physics Building HPK, Floor D'
     }
   };
 
@@ -32,8 +61,10 @@
     countDiscussed: document.getElementById('countDiscussed'),
     searchInput: document.getElementById('searchInput'),
     copyRoomBtn: document.getElementById('copyRoomBtn'),
-    copyMeetingIdBtn: document.getElementById('copyMeetingIdBtn'),
-    copyPasscodeBtn: document.getElementById('copyPasscodeBtn'),
+    zoomLinkBtn: document.getElementById('zoomLinkBtn'),
+    zoomModal: document.getElementById('zoomModal'),
+    zoomForm: document.getElementById('zoomForm'),
+    zoomKenncodeInput: document.getElementById('zoomKenncodeInput'),
     themeToggleBtn: document.getElementById('themeToggleBtn'),
     themeIcon: document.getElementById('themeIcon'),
     openProposeModalBtn: document.getElementById('openProposeModalBtn'),
@@ -43,6 +74,7 @@
     statusModal: document.getElementById('statusModal'),
     statusForm: document.getElementById('statusForm'),
     statusSelect: document.getElementById('statusSelect'),
+    statusAdminPin: document.getElementById('statusAdminPin'),
     deletePaperBtn: document.getElementById('deletePaperBtn'),
     statusPaperId: document.getElementById('statusPaperId'),
     statusPaperTitleDisplay: document.getElementById('statusPaperTitleDisplay'),
@@ -308,6 +340,15 @@
     }
   }
 
+  function sanitizeUrl(url) {
+    if (!url) return '#';
+    const trimmed = String(url).trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return escapeHtml(trimmed);
+    }
+    return '#';
+  }
+
   function renderPaperCard(paper) {
     const isVoted = !!paper.user_has_voted;
     const votes = paper.votes || 0;
@@ -324,9 +365,12 @@
       votersHtml = `<div class="voters-preview">${escapeHtml(paper.notes)}</div>`;
     }
 
+    const safePaperUrl = sanitizeUrl(paper.url);
+    const safePdfUrl = paper.pdf_url ? sanitizeUrl(paper.pdf_url) : '';
+
     // Direct PDF link if available
-    const pdfLink = paper.pdf_url ? `
-      <a href="${escapeHtml(paper.pdf_url)}" target="_blank" rel="noopener noreferrer" class="paper-link-btn" title="Open PDF">
+    const pdfLink = (paper.pdf_url && safePdfUrl !== '#') ? `
+      <a href="${safePdfUrl}" target="_blank" rel="noopener noreferrer" class="paper-link-btn" title="Open PDF">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -347,7 +391,7 @@
           </div>
 
           <h3 class="paper-title">
-            <a href="${escapeHtml(paper.url)}" target="_blank" rel="noopener noreferrer">
+            <a href="${safePaperUrl}" target="_blank" rel="noopener noreferrer">
               ${escapeHtml(paper.title)}
             </a>
           </h3>
@@ -356,7 +400,7 @@
           ${votersHtml}
 
           <div class="paper-links-row">
-            <a href="${escapeHtml(paper.url)}" target="_blank" rel="noopener noreferrer" class="paper-link-btn">
+            <a href="${safePaperUrl}" target="_blank" rel="noopener noreferrer" class="paper-link-btn">
               <span>Open Paper</span>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -443,6 +487,29 @@
     openModal(DOM.addPaperModal);
   });
 
+  // Zoom Protected Modal (Asks for Kenncode before redirecting)
+  if (DOM.zoomLinkBtn && DOM.zoomModal && DOM.zoomForm) {
+    DOM.zoomLinkBtn.addEventListener('click', () => {
+      DOM.zoomKenncodeInput.value = '';
+      openModal(DOM.zoomModal);
+      setTimeout(() => DOM.zoomKenncodeInput.focus(), 50);
+    });
+
+    DOM.zoomForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const code = DOM.zoomKenncodeInput.value.trim();
+      const zoomUrl = unlockZoomUrl(code);
+      if (!zoomUrl) {
+        showToast('Incorrect Zoom Kenncode', 'error');
+        DOM.zoomKenncodeInput.focus();
+        return;
+      }
+      closeModal(DOM.zoomModal);
+      DOM.zoomKenncodeInput.value = '';
+      window.open(zoomUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
   // arXiv Auto-fetch (Only triggers if user enters an arXiv link)
   DOM.arxivFetchBtn.addEventListener('click', async () => {
     const rawUrl = document.getElementById('paperUrl').value.trim();
@@ -499,6 +566,11 @@
       return;
     }
 
+    if (!/^https?:\/\//i.test(url)) {
+      showToast('URL must start with https:// or http://', 'error');
+      return;
+    }
+
     if (voterName) {
       state.voterName = voterName;
       localStorage.setItem('ml_hep_user_name', voterName);
@@ -542,6 +614,9 @@
           DOM.addPaperForm.reset();
           await loadInitialData();
           return;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || 'Could not add paper', 'error');
         }
       } catch (e) {
         showToast('Network error adding paper', 'error');
@@ -556,7 +631,7 @@
     }
   });
 
-  // Paper Status Management Modal
+  // Paper Status Management Modal (Protected by Admin PIN)
   function openStatusModal(paperId) {
     const paper = state.papers.find(p => p.id === paperId);
     if (!paper) return;
@@ -564,6 +639,7 @@
     DOM.statusPaperId.value = paper.id;
     DOM.statusPaperTitleDisplay.textContent = paper.title;
     DOM.statusSelect.value = paper.status || 'voting';
+    if (DOM.statusAdminPin) DOM.statusAdminPin.value = '';
     openModal(DOM.statusModal);
   }
 
@@ -571,21 +647,36 @@
     e.preventDefault();
     const paperId = DOM.statusPaperId.value;
     const newStatus = DOM.statusSelect.value;
+    const pin = DOM.statusAdminPin ? DOM.statusAdminPin.value.trim() : '';
+
+    if (!verifyPinClient(pin)) {
+      showToast('Invalid Admin PIN', 'error');
+      if (DOM.statusAdminPin) DOM.statusAdminPin.focus();
+      return;
+    }
+
     const paper = state.papers.find(p => p.id === paperId);
     if (!paper) return;
 
-    paper.status = newStatus;
-    if (newStatus === 'discussed' && !paper.discussed_date) {
-      paper.discussed_date = new Date().toISOString().split('T')[0];
-    }
+    const discussedDate = (newStatus === 'discussed' && !paper.discussed_date)
+      ? new Date().toISOString().split('T')[0]
+      : (paper.discussed_date || '');
 
     if (state.isServerMode) {
       try {
-        await fetch(`/api/papers/${encodeURIComponent(paperId)}/status`, {
+        const res = await fetch(`/api/papers/${encodeURIComponent(paperId)}/status`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus, discussed_date: paper.discussed_date })
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-PIN': pin
+          },
+          body: JSON.stringify({ status: newStatus, discussed_date: discussedDate, pin })
         });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Invalid Admin PIN', 'error');
+          return;
+        }
         showToast('Status updated!', 'success');
         closeModal(DOM.statusModal);
         await loadInitialData();
@@ -593,6 +684,8 @@
         showToast('Error updating status', 'error');
       }
     } else {
+      paper.status = newStatus;
+      paper.discussed_date = discussedDate;
       savePapersToLocalStorage();
       renderPapers();
       showToast('Status updated!', 'success');
@@ -602,13 +695,31 @@
 
   DOM.deletePaperBtn.addEventListener('click', async () => {
     const paperId = DOM.statusPaperId.value;
+    const pin = DOM.statusAdminPin ? DOM.statusAdminPin.value.trim() : '';
+
+    if (!verifyPinClient(pin)) {
+      showToast('Enter the Admin PIN first to delete a paper', 'error');
+      if (DOM.statusAdminPin) DOM.statusAdminPin.focus();
+      return;
+    }
+
     if (!confirm('Remove this paper?')) return;
 
     if (state.isServerMode) {
       try {
-        await fetch(`/api/papers/${encodeURIComponent(paperId)}`, {
-          method: 'DELETE'
+        const res = await fetch(`/api/papers/${encodeURIComponent(paperId)}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-PIN': pin
+          },
+          body: JSON.stringify({ pin })
         });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || 'Invalid Admin PIN', 'error');
+          return;
+        }
         showToast('Paper removed', 'info');
         closeModal(DOM.statusModal);
         await loadInitialData();

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ML-HEP Journal Club | FastML & ETH Zurich</title>
   <meta name="description" content="Weekly Machine Learning for Particle Physics Journal Club at ETH Zurich.">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -96,14 +96,14 @@
             </button>
           </div>
 
-          <!-- Zoom Direct Button (No ID / passcode clutter) -->
-          <a id="zoomLinkBtn" href="https://rwth.zoom-x.de/j/68276163828?pwd=bq3Tf6D6BWHv1OANfDSMTif5rzh3aY.1" target="_blank" rel="noopener noreferrer" class="btn btn-zoom">
+          <!-- Zoom Protected Button (Prompts for Kenncode before redirecting) -->
+          <button type="button" id="zoomLinkBtn" class="btn btn-zoom">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M23 7l-7 5 7 5V7z"></path>
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
             </svg>
             <span>Join Zoom Meeting</span>
-          </a>
+          </button>
         </div>
       </div>
     </section>
@@ -182,11 +182,11 @@
     </div>
   </div>
 
-  <!-- Modal: Mark as Discussed -->
+  <!-- Modal: Manage Paper (Requires Admin PIN) -->
   <div id="statusModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card" style="max-width:440px;">
       <div class="modal-header">
-        <h3>Move to Past Meetings</h3>
+        <h3>Manage Paper</h3>
         <button type="button" class="close-btn" data-close-modal="statusModal">&times;</button>
       </div>
       <form id="statusForm">
@@ -201,6 +201,12 @@
               <option value="discussed">Past Meeting (Discussed)</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label for="statusAdminPin">Admin PIN *</label>
+            <input type="password" id="statusAdminPin" inputmode="numeric" autocomplete="off" placeholder="Enter PIN to save or delete">
+            <span class="hint">Required to change paper status or delete a paper.</span>
+          </div>
         </div>
         <div class="modal-footer" style="justify-content:space-between;">
           <button type="button" class="btn btn-secondary btn-sm" id="deletePaperBtn" style="color:var(--accent-rose);">Delete</button>
@@ -208,6 +214,29 @@
             <button type="button" class="btn btn-secondary btn-sm" data-close-modal="statusModal">Cancel</button>
             <button type="submit" class="btn btn-primary btn-sm">Save</button>
           </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Join Zoom Meeting (Requires Kenncode) -->
+  <div id="zoomModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-header">
+        <h3>Join Zoom Meeting</h3>
+        <button type="button" class="close-btn" data-close-modal="zoomModal">&times;</button>
+      </div>
+      <form id="zoomForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="zoomKenncodeInput">Enter Zoom Kenncode *</label>
+            <input type="password" id="zoomKenncodeInput" inputmode="numeric" autocomplete="off" required placeholder="Kenncode">
+            <span class="hint">Redirects directly to the ML-HEP Journal Club Zoom room.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-close-modal="zoomModal">Cancel</button>
+          <button type="submit" class="btn btn-zoom btn-sm">Join Room</button>
         </div>
       </form>
     </div>
@@ -230,6 +259,6 @@
     </div>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

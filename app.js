@@ -156,7 +156,10 @@
   async function loadInitialData() {
     try {
       const res = await fetch('/api/papers', {
-        headers: { 'X-Voter-ID': state.voterId }
+        headers: {
+          'X-Voter-ID': state.voterId,
+          'X-Voter-Name': state.voterName
+        }
       });
       if (res.ok) {
         state.isServerMode = true;
@@ -206,37 +209,43 @@
     localStorage.setItem('ml_hep_papers_v2', JSON.stringify(state.papers));
   }
 
-  // Voting Logic with Intuitive Button & Name Prompt
+  // Voting Logic with Required Name & Duplicate Prevention
   async function toggleVote(paperId) {
     const paper = state.papers.find(p => p.id === paperId);
     if (!paper) return;
 
-    // If user hasn't set their name yet, ask once (can be skipped)
-    if (!state.voterName && !paper.user_has_voted) {
-      const name = prompt('Enter your name to add to the votes list (optional):', '');
-      if (name && name.trim()) {
-        state.voterName = name.trim();
-        localStorage.setItem('ml_hep_user_name', state.voterName);
+    // Require user name before voting
+    if (!state.voterName) {
+      const name = prompt('Please enter your name to vote (required):', '');
+      if (!name || !name.trim()) {
+        showToast('Please enter your name to vote', 'error');
+        return;
       }
+      state.voterName = name.trim();
+      localStorage.setItem('ml_hep_user_name', state.voterName);
     }
+
+    const currentVoters = Array.isArray(paper.voters) ? [...paper.voters] : [];
+    const nameMatchIndex = currentVoters.findIndex(
+      v => v.toLowerCase() === state.voterName.toLowerCase()
+    );
+    const previousHasVoted = !!paper.user_has_voted || nameMatchIndex > -1;
+    const previousVotes = paper.votes || 0;
 
     // Optimistic UI update
-    const previousHasVoted = !!paper.user_has_voted;
-    const previousVotes = paper.votes || 0;
-    const currentVoters = Array.isArray(paper.voters) ? [...paper.voters] : [];
-
     paper.user_has_voted = !previousHasVoted;
-    paper.votes = previousHasVoted ? Math.max(0, previousVotes - 1) : previousVotes + 1;
-
-    if (state.voterName) {
-      if (paper.user_has_voted) {
-        if (!currentVoters.includes(state.voterName)) currentVoters.push(state.voterName);
-      } else {
-        const idx = currentVoters.indexOf(state.voterName);
-        if (idx > -1) currentVoters.splice(idx, 1);
+    if (paper.user_has_voted) {
+      if (nameMatchIndex === -1) {
+        currentVoters.push(state.voterName);
+        paper.votes = previousVotes + 1;
       }
-      paper.voters = currentVoters;
+    } else {
+      if (nameMatchIndex > -1) {
+        currentVoters.splice(nameMatchIndex, 1);
+      }
+      paper.votes = Math.max(0, previousVotes - 1);
     }
+    paper.voters = currentVoters;
 
     renderPapers();
 
@@ -259,10 +268,11 @@
           renderPapers();
           showToast(result.has_voted ? 'Vote registered!' : 'Vote removed.');
         } else {
+          const err = await res.json().catch(() => ({}));
           paper.user_has_voted = previousHasVoted;
           paper.votes = previousVotes;
           renderPapers();
-          showToast('Failed to register vote', 'error');
+          showToast(err.error || 'Failed to register vote', 'error');
         }
       } catch (e) {
         paper.user_has_voted = previousHasVoted;
@@ -566,15 +576,18 @@
       return;
     }
 
+    if (!voterName) {
+      showToast('Please enter your name', 'error');
+      return;
+    }
+
     if (!/^https?:\/\//i.test(url)) {
       showToast('URL must start with https:// or http://', 'error');
       return;
     }
 
-    if (voterName) {
-      state.voterName = voterName;
-      localStorage.setItem('ml_hep_user_name', voterName);
-    }
+    state.voterName = voterName;
+    localStorage.setItem('ml_hep_user_name', voterName);
 
     // Check if it's an arXiv link for convenience
     let arxivId = '';
@@ -591,9 +604,10 @@
       pdf_url: pdfUrl,
       arxiv_id: arxivId,
       status: 'voting',
-      votes: voterName ? 1 : 0,
-      voters: voterName ? [voterName] : [],
-      user_has_voted: !!voterName,
+      voter_name: voterName,
+      votes: 1,
+      voters: [voterName],
+      user_has_voted: true,
       created_at: new Date().toISOString()
     };
 

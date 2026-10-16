@@ -300,20 +300,20 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
             return
 
         elif path == "/api/papers":
-            voter_id, _ = self._get_voter_info()
+            voter_id, voter_name = self._get_voter_info()
             conn = get_db()
             # Preserve the simple list order (natural order / created_at order)
             sql = """
                 SELECT p.*,
                        COUNT(v.voter_id) as votes,
-                       MAX(CASE WHEN v.voter_id = ? THEN 1 ELSE 0 END) as user_has_voted,
+                       MAX(CASE WHEN v.voter_id = ? OR (? != '' AND LOWER(v.voter_name) = LOWER(?)) THEN 1 ELSE 0 END) as user_has_voted,
                        GROUP_CONCAT(v.voter_name, ', ') as voters_str
                 FROM papers p
                 LEFT JOIN votes v ON p.id = v.paper_id
                 GROUP BY p.id
                 ORDER BY p.rowid ASC
             """
-            rows = conn.execute(sql, (voter_id,)).fetchall()
+            rows = conn.execute(sql, (voter_id, voter_name, voter_name)).fetchall()
             papers = []
             for r in rows:
                 p = dict(r)
@@ -379,8 +379,15 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
         elif path == "/api/papers":
             title = (data.get("title") or "").strip()[:500]
             url = (data.get("url") or "").strip()[:2000]
+            voter_id, voter_name = self._get_voter_info()
+            if not voter_name and data.get("voter_name"):
+                voter_name = str(data.get("voter_name")).strip()[:100]
+
             if not title or not url:
                 self._send_json({"error": "Title and URL are required"}, 400)
+                return
+            if not voter_name:
+                self._send_json({"error": "Your name is required when adding a paper"}, 400)
                 return
             if not is_safe_http_url(url):
                 self._send_json({"error": "Paper URL must be a valid http:// or https:// link"}, 400)
@@ -408,11 +415,9 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (paper_id, title, authors, year, url, pdf_url, arxiv_id, json.dumps(tags), status, notes, created_at))
 
-                    # Proposer gets 1 initial vote if voter name/id provided
-                    voter_id, voter_name = self._get_voter_info()
-                    if voter_id:
-                        conn.execute("INSERT OR IGNORE INTO votes (paper_id, voter_id, voter_name, created_at) VALUES (?, ?, ?, ?)",
-                                     (paper_id, voter_id, voter_name or "Participant", created_at))
+                    # Proposer gets 1 initial vote tied to their name & voter_id
+                    conn.execute("INSERT OR IGNORE INTO votes (paper_id, voter_id, voter_name, created_at) VALUES (?, ?, ?, ?)",
+                                 (paper_id, voter_id, voter_name, created_at))
             except sqlite3.IntegrityError:
                 conn.close()
                 self._send_json({"error": "Paper already exists"}, 409)
@@ -432,13 +437,23 @@ class JournalClubHandler(SimpleHTTPRequestHandler):
 
             conn = get_db()
             with conn:
-                existing = conn.execute("SELECT 1 FROM votes WHERE paper_id = ? AND voter_id = ?", (paper_id, voter_id)).fetchone()
+                existing = conn.execute(
+                    "SELECT 1 FROM votes WHERE paper_id = ? AND (voter_id = ? OR (? != '' AND LOWER(voter_name) = LOWER(?)))",
+                    (paper_id, voter_id, voter_name, voter_name)
+                ).fetchone()
                 if existing:
-                    conn.execute("DELETE FROM votes WHERE paper_id = ? AND voter_id = ?", (paper_id, voter_id))
+                    conn.execute(
+                        "DELETE FROM votes WHERE paper_id = ? AND (voter_id = ? OR (? != '' AND LOWER(voter_name) = LOWER(?)))",
+                        (paper_id, voter_id, voter_name, voter_name)
+                    )
                     has_voted = False
                 else:
+                    if not voter_name:
+                        conn.close()
+                        self._send_json({"error": "Your name is required to vote"}, 400)
+                        return
                     conn.execute("INSERT INTO votes (paper_id, voter_id, voter_name, created_at) VALUES (?, ?, ?, ?)",
-                                 (paper_id, voter_id, voter_name or "", datetime.now(timezone.utc).isoformat()))
+                                 (paper_id, voter_id, voter_name, datetime.now(timezone.utc).isoformat()))
                     has_voted = True
 
                 cur = conn.execute("SELECT COUNT(*), GROUP_CONCAT(voter_name, ', ') FROM votes WHERE paper_id = ?", (paper_id,))

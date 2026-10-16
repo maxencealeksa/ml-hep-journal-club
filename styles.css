@@ -59,10 +59,6 @@
   padding: 0;
 }
 
-html, body {
-  overflow-x: hidden;
-}
-
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
@@ -86,9 +82,10 @@ header.site-header {
   background: var(--bg-glass);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   padding-top: env(safe-area-inset-top, 0px);
 }
 
